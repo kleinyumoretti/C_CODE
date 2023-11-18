@@ -1,38 +1,38 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
-//void menu()
-//{
-//	printf("******************************************\n");
-//	printf("******1.play    0.exit********************\n");
-//	printf("******************************************\n");
-//}
-//void test()
-//{
-//	int input = 0;
-//	do
-//	{
-//		menu();
-//		printf("ÇëÑ¡Ôñ£º>");
-//		scanf("%d,&input");
-//		switch (input)
-//		{
-//		case 1:
-//			printf("Èı×ÓÆå\n");
-//			break;
-//		case 2:
-//			printf("ÍË³öÓÎÏ·\n");
-//			break;
-//		default:
-//			printf("Ñ¡Ôñ´íÎó£¬ÇëÖØĞÂÑ¡Ôñ\n");
-//			break;
-//		}
-//	} while (input);
-//}
-//int main()
-//{
-//	test();
-//	return 0;
-//}
+void menu()
+{
+	printf("******************************************\n");
+	printf("******1.play    0.exit********************\n");
+	printf("******************************************\n");
+}
+void test()
+{
+	int input = 0;
+	do
+	{
+		menu();
+		printf("è¯·é€‰æ‹©ï¼š>");
+		scanf("%d,&input");
+		switch (input)
+		{
+		case 1:
+			printf("ä¸‰å­æ£‹\n");
+			break;
+		case 2:
+			printf("é€€å‡ºæ¸¸æˆ\n");
+			break;
+		default:
+			printf("é€‰æ‹©é”™è¯¯ï¼Œè¯·é‡æ–°é€‰æ‹©\n");
+			break;
+		}
+	} while (input);
+}
+int main()
+{
+	test();
+	return 0;
+}
 int main()
 {
 	int a = 0;
