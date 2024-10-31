@@ -1,0 +1,9 @@
+#pragma once
+#define _CRT_SECURE_NO_WARNINGS
+#include "interface.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <conio.h>
+#include <Windows.h>
+#include "usermanagementsystem.h"
+void Property();
