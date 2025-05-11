@@ -1,0 +1,7 @@
+com\klein\LogixSwiftManagementApplication.class
+com\klein\service\Impl\PackageServiceImpl.class
+com\klein\controller\PackagesController.class
+com\klein\pojo\Packages.class
+com\klein\service\PackagesService.class
+com\klein\mapper\PackagesMapper.class
+com\klein\pojo\Result.class

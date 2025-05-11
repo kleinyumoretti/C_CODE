@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogixSwift - 包裹追踪系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36CFC9',
+                        dark: '#1D2129',
+                        'dark-light': '#272E3B',
+                        'dark-lighter': '#343A46',
+                        success: '#00B42A',
+                        warning: '#FF7D00',
+                        danger: '#F53F3F',
+                        info: '#86909C'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .animate-pulse-slow {
+                animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(22, 93, 255, 0.1), 0 10px 10px -5px rgba(22, 93, 255, 0.04);
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-dark text-gray-200 min-h-screen flex flex-col">
+<!-- 导航栏 -->
+<nav class="bg-dark-light border-b border-dark-lighter sticky top-0 z-50 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <i class="fa-solid fa-boxes-stacked text-primary text-2xl mr-2"></i>
+                    <span class="text-xl font-bold text-white tracking-tight">LogixSwift</span>
+                </div>
+                <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                    <a href="#" class="border-primary text-white border-b-2 px-1 pt-1 inline-flex items-center text-sm font-medium">
+                        <i class="fa-solid fa-package mr-1"></i>包裹追踪
+                    </a>
+                    <a href="addpackage.html" class="border-transparent text-gray-400 hover:text-white hover:border-gray-300 px-1 pt-1 inline-flex items-center text-sm font-medium">
+                        <i class="fa-solid fa-plus-circle mr-1"></i>添加包裹
+                    </a>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="ml-3 relative">
+                    <div class="flex items-center">
+                        <button type="button" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" id="user-menu-button">
+                            <span class="sr-only">打开用户菜单</span>
+                            <img class="h-8 w-8 rounded-full object-cover" src="https://picsum.photos/id/1005/200/200" alt="用户头像">
+                        </button>
+                        <span class="ml-2 hidden md:block">klein</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- 主要内容 -->
+<main class="flex-grow">
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- 页面标题 -->
+        <div class="mb-8">
+            <h1 class="text-[clamp(1.75rem,3vw,2.5rem)] font-bold text-white mb-2 text-shadow">LogixSwift</h1>
+            <p class="text-gray-400">实时监控和管理所有物流包裹</p>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="bg-dark-light rounded-xl p-6 mb-8 shadow-lg border border-dark-lighter">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex-grow">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="search-input" class="bg-dark-lighter border border-gray-700 text-white rounded-lg block w-full pl-10 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all" placeholder="搜索包裹ID...">
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative">
+                        <select id="status-filter" class="bg-dark-lighter border border-gray-700 text-white rounded-lg block pl-3 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer transition-all">
+                            <option value="all">所有状态</option>
+                            <option value="in-transit">运输中</option>
+                            <option value="delivered">已送达</option>
+                            <option value="pending">待处理</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                    <button id="refresh-btn" class="bg-primary hover:bg-primary/90 text-white font-medium rounded-lg px-4 py-2.5 flex items-center justify-center transition-all duration-300 transform hover:scale-105">
+                        <i class="fa-solid fa-refresh mr-2"></i>
+                        <span>刷新数据</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据统计卡片 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-dark-light rounded-xl p-6 shadow-lg border border-dark-lighter card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">总包裹数</p>
+                        <h3 id="total-packages" class="text-3xl font-bold text-white mt-1">0</h3>
+                    </div>
+                    <div class="bg-primary/10 p-3 rounded-lg">
+                        <i class="fa-solid fa-box text-primary text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm">
+            <span class="text-success flex items-center">
+              <i class="fa-solid fa-arrow-up mr-1"></i>12%
+            </span>
+                    <span class="text-gray-400 ml-2">相比上周</span>
+                </div>
+            </div>
+
+            <div class="bg-dark-light rounded-xl p-6 shadow-lg border border-dark-lighter card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">运输中</p>
+                        <h3 id="in-transit" class="text-3xl font-bold text-warning mt-1">0</h3>
+                    </div>
+                    <div class="bg-warning/10 p-3 rounded-lg">
+                        <i class="fa-solid fa-truck text-warning text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm">
+            <span class="text-danger flex items-center">
+              <i class="fa-solid fa-arrow-up mr-1"></i>8%
+            </span>
+                    <span class="text-gray-400 ml-2">相比上周</span>
+                </div>
+            </div>
+
+            <div class="bg-dark-light rounded-xl p-6 shadow-lg border border-dark-lighter card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">已送达</p>
+                        <h3 id="delivered" class="text-3xl font-bold text-success mt-1">0</h3>
+                    </div>
+                    <div class="bg-success/10 p-3 rounded-lg">
+                        <i class="fa-solid fa-check-circle text-success text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm">
+            <span class="text-success flex items-center">
+              <i class="fa-solid fa-arrow-up mr-1"></i>15%
+            </span>
+                    <span class="text-gray-400 ml-2">相比上周</span>
+                </div>
+            </div>
+
+            <div class="bg-dark-light rounded-xl p-6 shadow-lg border border-dark-lighter card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">待处理</p>
+                        <h3 id="pending" class="text-3xl font-bold text-danger mt-1">0</h3>
+                    </div>
+                    <div class="bg-danger/10 p-3 rounded-lg">
+                        <i class="fa-solid fa-clock text-danger text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm">
+            <span class="text-success flex items-center">
+              <i class="fa-solid fa-arrow-down mr-1"></i>5%
+            </span>
+                    <span class="text-gray-400 ml-2">相比上周</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 包裹列表 -->
+        <div class="bg-dark-light rounded-xl shadow-lg border border-dark-lighter overflow-hidden">
+            <div class="p-6 border-b border-dark-lighter">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <h2 class="text-xl font-bold text-white">包裹列表</h2>
+                    <div class="flex items-center text-sm text-gray-400">
+                        <span id="last-updated">最后更新: 从未</span>
+                        <div class="animate-pulse-slow ml-2 hidden" id="loading-indicator">
+                            <i class="fa-solid fa-circle-notch"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 空状态 -->
+            <div id="empty-state" class="py-16 flex flex-col items-center justify-center text-center">
+                <div class="bg-dark-lighter p-5 rounded-full mb-4">
+                    <i class="fa-solid fa-box-open text-3xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-white mb-2">暂无包裹数据</h3>
+                <p class="text-gray-400 max-w-md">点击"刷新数据"按钮加载包裹信息，或确保后端服务正常运行。</p>
+                <button id="empty-refresh-btn" class="mt-4 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg px-4 py-2 flex items-center transition-all duration-300 transform hover:scale-105">
+                    <i class="fa-solid fa-refresh mr-2"></i>
+                    <span>刷新数据</span>
+                </button>
+            </div>
+
+            <!-- 错误状态 -->
+            <div id="error-state" class="py-16 flex flex-col items-center justify-center text-center hidden">
+                <div class="bg-danger/10 p-5 rounded-full mb-4">
+                    <i class="fa-solid fa-exclamation-triangle text-3xl text-danger"></i>
+                </div>
+                <h3 class="text-lg font-medium text-white mb-2">数据还没有加载出来哦</h3>
+                <p id="error-message" class="text-gray-400 max-w-md">无法连接到后端API，请检查网络连接或API端点是否正确。</p>
+                <button id="error-refresh-btn" class="mt-4 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg px-4 py-2 flex items-center transition-all duration-300 transform hover:scale-105">
+                    <i class="fa-solid fa-refresh mr-2"></i>
+                    <span>重试</span>
+                </button>
+            </div>
+
+            <!-- 包裹列表内容 -->
+            <div id="packages-container" class="hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-dark-lighter">
+                        <thead class="bg-dark-lighter">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">包裹ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">发货地</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">目的地</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">当前位置</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">状态</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="packages-table-body" class="divide-y divide-dark-lighter">
+                        <!-- 包裹数据将通过JavaScript动态插入 -->
+                        </tbody>
+                    </table>
+                </div>
+
+<!--                 分页控件-->
+                <div class="px-6 py-4 border-t border-dark-lighter flex items-center justify-between">
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">
+                                显示 <span class="font-medium">1</span> 到 <span class="font-medium">10</span> 条，共 <span id="total-count" class="font-medium">0</span> 条记录
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-dark-lighter bg-dark text-sm font-medium text-gray-400 hover:bg-dark-lighter">
+                                    <span class="sr-only">上一页</span>
+                                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                                </a>
+                                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-dark-lighter bg-primary text-sm font-medium text-white">
+                                    1
+                                </a>
+                                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-dark-lighter bg-dark text-sm font-medium text-gray-400 hover:bg-dark-lighter">
+                                    2
+                                </a>
+                                <span class="relative inline-flex items-center px-4 py-2 border border-dark-lighter bg-dark text-sm font-medium text-gray-400">
+                    ...
+                  </span>
+                                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-dark-lighter bg-dark text-sm font-medium text-gray-400 hover:bg-dark-lighter">
+                                    5
+                                </a>
+                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-dark-lighter bg-dark text-sm font-medium text-gray-400 hover:bg-dark-lighter">
+                                    <span class="sr-only">下一页</span>
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 页脚 -->
+<footer class="bg-dark-light border-t border-dark-lighter py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center mb-4 md:mb-0">
+                <i class="fa-solid fa-boxes-stacked text-primary text-xl mr-2"></i>
+                <span class="text-lg font-bold text-white">LogixSwift</span>
+            </div>
+            <div class="flex flex-col md:flex-row gap-4 text-sm text-gray-400">
+                <div>© 2025 LogixSwift. 保留所有权利。</div>
+                <div class="flex space-x-4">
+                    <a href="#" class="hover:text-primary transition-colors">隐私政策</a>
+                    <a href="#" class="hover:text-primary transition-colors">使用条款</a>
+                    <a href="#" class="hover:text-primary transition-colors">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- 包裹详情模态框 -->
+<!--<div id="package-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">-->
+<!--    <div class="bg-dark-light rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0" id="modal-content">-->
+<!--        <div class="p-6 border-b border-dark-lighter flex justify-between items-center">-->
+<!--            <h3 class="text-xl font-bold text-white" id="modal-title">包裹详情</h3>-->
+<!--            <button id="close-modal" class="text-gray-400 hover:text-white transition-colors">-->
+<!--                <i class="fa-solid fa-times"></i>-->
+<!--            </button>-->
+<!--        </div>-->
+<!--        <div class="p-6" id="modal-body">-->
+<!--            <div class="space-y-6">-->
+<!--                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">-->
+<!--                    <div>-->
+<!--                        <h4 class="text-sm font-medium text-gray-400 mb-1">包裹ID</h4>-->
+<!--                        <p id="detail-id" class="text-white font-semibold">PKG-123456</p>-->
+<!--                    </div>-->
+<!--                    <div>-->
+<!--                        <h4 class="text-sm font-medium text-gray-400 mb-1">当前状态</h4>-->
+<!--                        <p id="detail-status" class="text-success font-semibold">已送达</p>-->
+<!--                    </div>-->
+<!--                    <div>-->
+<!--                        <h4 class="text-sm font-medium text-gray-400 mb-1">发货地</h4>-->
+<!--                        <p id="detail-origin" class="text-white">上海仓库</p>-->
+<!--                    </div>-->
+<!--                    <div>-->
+<!--                        <h4 class="text-sm font-medium text-gray-400 mb-1">目的地</h4>-->
+<!--                        <p id="detail-destination" class="text-white">北京配送中心</p>-->
+<!--                    </div>-->
+<!--                    <div>-->
+<!--                        <h4 class="text-sm font-medium text-gray-400 mb-1">当前位置</h4>-->
+<!--                        <p id="detail-current" class="text-white">南京中转站</p>-->
+<!--                    </div>-->
+<!--                    <div>-->
+<!--                        <h4 class="text-sm font-medium text-gray-400 mb-1">预计送达时间</h4>-->
+<!--                        <p id="detail-estimated" class="text-white">2025-05-12</p>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                <div>-->
+<!--                    <h4 class="text-sm font-medium text-gray-400 mb-3">物流跟踪</h4>-->
+<!--                    <div class="relative">-->
+<!--                        &lt;!&ndash; 垂直线 &ndash;&gt;-->
+<!--                        <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-dark-lighter"></div>-->
+
+<!--                        &lt;!&ndash; 物流状态时间线 &ndash;&gt;-->
+<!--                        <div id="tracking-timeline" class="space-y-6">-->
+<!--                            &lt;!&ndash; 时间线项目将通过JavaScript动态插入 &ndash;&gt;-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="p-6 border-t border-dark-lighter flex justify-end">-->
+<!--            <button id="close-modal-btn" class="bg-dark hover:bg-dark-lighter text-white font-medium rounded-lg px-4 py-2 transition-colors">-->
+<!--                关闭-->
+<!--            </button>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<script>
+    // API 配置
+    const API_CONFIG = {
+        baseUrl: '', // 将由用户设置
+        endpoints: {
+            packages: '/packages'
+        }
+    };
+
+    // DOM 元素
+    const refreshBtn = document.getElementById('refresh-btn');
+    const emptyRefreshBtn = document.getElementById('empty-refresh-btn');
+    const errorRefreshBtn = document.getElementById('error-refresh-btn');
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const lastUpdated = document.getElementById('last-updated');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const emptyState = document.getElementById('empty-state');
+    const errorState = document.getElementById('error-state');
+    const errorMessage = document.getElementById('error-message');
+    const packagesContainer = document.getElementById('packages-container');
+    const packagesTableBody = document.getElementById('packages-table-body');
+    const totalPackages = document.getElementById('total-packages');
+    const inTransit = document.getElementById('in-transit');
+    const delivered = document.getElementById('delivered');
+    const pending = document.getElementById('pending');
+    const totalCount = document.getElementById('total-count');
+
+    // 状态管理
+    let packagesData = [];
+    let filteredPackages = [];
+    let isLoading = false;
+
+    // 设置API基础URL
+    function setApiBaseUrl(url) {
+        API_CONFIG.baseUrl = url;
+    }
+
+    // 获取包裹数据
+    async function fetchPackages() {
+        if (isLoading) return;
+
+        isLoading = true;
+        loadingIndicator.classList.remove('hidden');
+        refreshBtn.disabled = true;
+
+        try {
+            const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.packages}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP错误! 状态码: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.code !== 1) {
+                throw new Error(result.msg || '获取包裹数据失败');
+            }
+
+            packagesData = result.data || [];
+            applyFilters();
+            updateStatistics();
+            renderPackages();
+            updateLastUpdated();
+
+            // 显示/隐藏适当的状态
+            if (packagesData.length === 0) {
+                emptyState.classList.remove('hidden');
+                errorState.classList.add('hidden');
+                packagesContainer.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                errorState.classList.add('hidden');
+                packagesContainer.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('获取包裹数据时出错:', error);
+            errorMessage.textContent = `获取包裹数据失败: ${error.message}`;
+            emptyState.classList.add('hidden');
+            errorState.classList.remove('hidden');
+            packagesContainer.classList.add('hidden');
+        } finally {
+            isLoading = false;
+            loadingIndicator.classList.add('hidden');
+            refreshBtn.disabled = false;
+        }
+    }
+
+    // 应用过滤条件
+    function applyFilters() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const status = statusFilter.value;
+
+        filteredPackages = packagesData.filter(package => {
+            const matchesSearch =
+                String(package.id).includes(searchTerm) ||
+                package.origin.toLowerCase().includes(searchTerm) ||
+                package.destination.toLowerCase().includes(searchTerm) ||
+                package.current.toLowerCase().includes(searchTerm);
+
+            const matchesStatus =
+                status === 'all' ||
+                (status === 'in-transit' && isInTransit(package)) ||
+                (status === 'delivered' && isDelivered(package)) ||
+                (status === 'pending' && isPending(package));
+
+            return matchesSearch && matchesStatus;
+        });
+
+        totalCount.textContent = filteredPackages.length;
+    }
+
+    // 检查包裹状态
+    function isInTransit(packageData) {
+        // 这里根据实际业务逻辑判断，示例中简单判断当前位置不等于目的地
+        return packageData.current !== packageData.destination&&packageData.current !== packageData.origin;
+    }
+
+    function isDelivered(packageData) {
+        // 这里根据实际业务逻辑判断，示例中简单判断当前位置等于目的地
+        return packageData.current === packageData.destination;
+    }
+
+
+    function isPending(packageData) {
+        // 这里根据实际业务逻辑判断，示例中简单判断当前位置等于发货地
+        return packageData.current === packageData.origin;
+    }
+
+    // 更新统计信息
+    function updateStatistics() {
+        totalPackages.textContent = packagesData.length;
+
+        const inTransitCount = packagesData.filter(isInTransit).length;
+        const deliveredCount = packagesData.filter(isDelivered).length;
+        const pendingCount = packagesData.filter(isPending).length;
+
+        inTransit.textContent = inTransitCount;
+        delivered.textContent = deliveredCount;
+        pending.textContent = pendingCount;
+    }
+
+    // 渲染包裹列表
+    function renderPackages() {
+        packagesTableBody.innerHTML = '';
+
+        if (filteredPackages.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `
+          <td colspan="6" class="px-6 py-10 text-center">
+            <div class="flex items-center justify-center">
+              <i class="fa-solid fa-search text-gray-400 mr-2"></i>
+              <span class="text-gray-400">没有找到匹配的包裹</span>
+            </div>
+          </td>
+        `;
+            packagesTableBody.appendChild(emptyRow);
+            return;
+        }
+
+        filteredPackages.forEach(packageData => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-dark-lighter/50 transition-colors';
+
+            // 确定状态和颜色
+            let statusText, statusClass, statusIcon;
+            if (isDelivered(packageData)) {
+                statusText = '已送达';
+                statusClass = 'bg-success/10 text-success';
+                statusIcon = 'fa-check-circle';
+            } else if (isInTransit(packageData)) {
+                statusText = '运输中';
+                statusClass = 'bg-warning/10 text-warning';
+                statusIcon = 'fa-truck';
+            } else {
+                statusText = '待处理';
+                statusClass = 'bg-danger/10 text-danger';
+                statusIcon = 'fa-clock';
+            }
+
+            row.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <div class="bg-primary/10 text-primary text-xs font-medium px-2.5 py-0.5 rounded mr-3">
+                ${packageData.id}
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-white">${packageData.origin}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-white">${packageData.destination}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-white">${packageData.current}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+              <i class="fa-solid ${statusIcon} mr-1"></i>${statusText}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <button class="text-danger hover:text-primary/80 transition-colors delete-package" data-id="${packageData.id}">
+              删除数据 <i class="fa-solid fa-trash ml-1"></i>
+            </button>
+          </td>
+        `;
+
+            packagesTableBody.appendChild(row);
+        });
+
+        // 添加删除事件监听器
+        document.querySelectorAll('.delete-package').forEach(button => {
+            button.addEventListener('click', async () => {
+                const packageId = button.dataset.id;
+
+                if (!confirm(`确定要删除包裹ID为 ${packageId} 的数据吗？`)) return;
+
+                try {
+                    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.packages}?id=${packageId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`删除失败，状态码：${response.status}`);
+                    }
+
+                    // 刷新数据
+                    await fetchPackages();
+                } catch (error) {
+                    alert(`删除失败：${error.message}`);
+                }
+            });
+        });
+
+    }
+
+
+
+
+
+    // 更新最后更新时间
+    function updateLastUpdated() {
+        const now = new Date();
+        const formattedTime = now.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        lastUpdated.textContent = `最后更新: ${formattedTime}`;
+    }
+
+
+    // 初始化
+    function init() {
+        // 设置默认API基础URL（用户需替换为实际URL）
+        setApiBaseUrl('http://localhost:8080');
+
+        // 添加事件监听器
+        refreshBtn.addEventListener('click', fetchPackages);
+        emptyRefreshBtn.addEventListener('click', fetchPackages);
+        errorRefreshBtn.addEventListener('click', fetchPackages);
+
+        searchInput.addEventListener('input', () => {
+            applyFilters();
+            renderPackages();
+        });
+
+        statusFilter.addEventListener('change', () => {
+            applyFilters();
+            renderPackages();
+        });
+
+
+
+        // 页面加载时自动刷新数据
+        fetchPackages();
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
