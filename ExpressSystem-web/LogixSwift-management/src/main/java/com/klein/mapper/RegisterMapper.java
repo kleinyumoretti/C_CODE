@@ -8,4 +8,7 @@ import org.apache.ibatis.annotations.Select;
 public interface RegisterMapper {
     @Select("select username ,password from user where username=#{username} and password=#{password}")
     User findByUsername(User user);
+
+    @Select("insert into user(username,password) values(#{username},#{password})")
+    void register(User user);
 }

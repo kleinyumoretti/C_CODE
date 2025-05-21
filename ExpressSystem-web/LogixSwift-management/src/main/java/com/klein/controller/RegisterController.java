@@ -14,11 +14,9 @@ public class RegisterController {
     private RegisterService registerService;
     @PostMapping("/register")
     public Result register(@RequestBody User user) {
-        if(registerService.register(user)) {
+
+            registerService.register(user);
             return Result.success();
-        }
-        else{
-            return Result.error("注册失败");
-        }
+
     }
 }

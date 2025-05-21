@@ -13,11 +13,11 @@ public class RegisterServiceImpl implements RegisterService {
     @Override
     public boolean register(User user) {
         User existingUser = registerMapper.findByUsername(user);
-        if(existingUser == null)
+        if(existingUser == null) {
+            registerMapper.register(user);
             return false;
-        else{
-            registerMapper.addUser(user);
-            return ture;
+        }else{
+            return false;
         }
     }
 }
